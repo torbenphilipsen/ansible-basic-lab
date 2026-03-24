@@ -1,0 +1,116 @@
+---
+- name: Verify and prepare host for oVirt
+  hosts: ovirthosts
+  become: true
+  gather_facts: true
+
+  vars:
+    root_password: "Hokadf345&werf"
+
+  tasks:
+    - name: Check if CPU supports virtualization
+      ansible.builtin.command:
+        cmd: grep -E '(vmx|svm)' /proc/cpuinfo
+      register: virt_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display virtualization support
+      ansible.builtin.debug:
+        msg: "{{ 'CPU virtualization is supported (vmx/svm flags found)' if virt_check.rc == 0 else 'WARNING: CPU virtualization not detected!' }}"
+
+    - name: Fail if virtualization not supported
+      ansible.builtin.fail:
+        msg: "CPU does not support virtualization. Cannot proceed."
+      when: virt_check.rc != 0
+
+    - name: Get CPU model information
+      ansible.builtin.command:
+        cmd: grep -m 1 'model name' /proc/cpuinfo
+      register: cpu_model
+      changed_when: false
+
+    - name: Display system information
+      ansible.builtin.debug:
+        msg:
+          - "Hostname: {{ ansible_hostname }}"
+          - "FQDN: {{ ansible_fqdn }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "CPU Model: {{ cpu_model.stdout.split(':')[1] | trim }}"
+          - "CPU Architecture: {{ ansible_architecture }}"
+          - "CPU Cores: {{ ansible_processor_vcpus }}"
+          - "CPU virtualization: Enabled"
+
+    - name: Set root password
+      ansible.builtin.user:
+        name: root
+        password: "{{ root_password | password_hash('sha512') }}"
+        update_password: always
+
+    - name: Enable root login with password in SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin yes'
+        state: present
+      notify: Restart SSH
+
+    - name: Enable password authentication in SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        state: present
+      notify: Restart SSH
+
+    - name: Install EPEL repository from Fedora Project
+      ansible.builtin.dnf:
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        state: present
+        disable_gpg_check: true
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "9"
+
+    - name: Enable AlmaLinux extras repository
+      ansible.builtin.command:
+        cmd: dnf config-manager --set-enabled extras
+      register: extras_result
+      changed_when: false
+      failed_when: false
+      when: ansible_distribution == "AlmaLinux"
+
+    - name: Enable PowerTools/CRB repository (required for dependencies)
+      ansible.builtin.command:
+        cmd: dnf config-manager --set-enabled crb
+      register: crb_result
+      changed_when: false
+      failed_when: false
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "9"
+
+    - name: Install CentOS release package for oVirt 4.5
+      ansible.builtin.dnf:
+        name: centos-release-ovirt45
+        state: present
+      register: ovirt_repo
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "9"
+
+    - name: Update package cache
+      ansible.builtin.dnf:
+        update_cache: true
+      when: ovirt_repo.changed
+
+    - name: Verify ovirt-hosted-engine-setup package is available
+      ansible.builtin.command:
+        cmd: dnf list available ovirt-hosted-engine-setup
+      register: package_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display package availability
+      ansible.builtin.debug:
+        msg: "{{ 'ovirt-hosted-engine-setup package is available' if package_check.rc == 0 else 'WARNING: ovirt-hosted-engine-setup package not found in repositories!' }}"
+
+  handlers:
+    - name: Restart SSH
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

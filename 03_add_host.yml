@@ -1,0 +1,92 @@
+---
+- name: Add hypervisor host to oVirt Engine
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    ovirt_engine_url: "https://ovirt.internal.cloudapp.net/ovirt-engine/api"
+    ovirt_engine_user: "admin@ovirt@internalsso"
+    ovirt_engine_password: "ChangeMe123!"  # Use Ansible Vault!
+    ovirt_host_name: "host1"
+    ovirt_host_address: "host1.internal.cloudapp.net"
+    datacenter_name: "Default"
+    cluster_name: "Default"
+
+  tasks:
+    - name: Obtain SSO token
+      ovirt.ovirt.ovirt_auth:
+        url: "{{ ovirt_engine_url }}"
+        username: "{{ ovirt_engine_user }}"
+        password: "{{ ovirt_engine_password }}"
+        insecure: true  # Set to false in production with valid certs
+      register: ovirt_auth
+      no_log: true  # Don't log credentials
+
+    - name: Display authentication status
+      ansible.builtin.debug:
+        msg: "Successfully authenticated to oVirt Engine"
+
+    - name: Ensure datacenter exists
+      ovirt.ovirt.ovirt_datacenter:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        name: "{{ datacenter_name }}"
+        description: "Default datacenter"
+        comment: "Created by Ansible"
+        compatibility_version: "4.7"
+        local: true
+        state: present
+
+    - name: Ensure cluster exists
+      ovirt.ovirt.ovirt_cluster:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        name: "{{ cluster_name }}"
+        description: "Default cluster"
+        data_center: "{{ datacenter_name }}"
+        compatibility_version: "4.7"
+        state: present
+
+    - name: Add host to oVirt Engine
+      ovirt.ovirt.ovirt_host:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        name: "{{ ovirt_host_name }}"
+        address: "{{ ovirt_host_address }}"
+        cluster: "{{ cluster_name }}"
+        password: "Hokadf345&werf"
+        public_key: false
+        state: present
+        timeout: 1200
+        override_iptables: true
+      register: host_result
+
+    - name: Display host addition result
+      ansible.builtin.debug:
+        msg:
+          - "Host addition initiated: {{ ovirt_host_name }}"
+          - "Status: {{ host_result.host.status | default('Unknown') }}"
+
+    - name: Wait for host to become 'Up'
+      ovirt.ovirt.ovirt_host_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        pattern: "name={{ ovirt_host_name }}"
+      register: host_info
+      until: host_info.ovirt_hosts[0].status == 'up'
+      retries: 60
+      delay: 10
+      when: host_result.changed
+
+    - name: Display final host status
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "Host successfully added to oVirt!"
+          - "=========================================="
+          - "Host: {{ ovirt_host_name }}"
+          - "Cluster: {{ cluster_name }}"
+          - "Status: {{ host_info.ovirt_hosts[0].status }}"
+          - "=========================================="
+      when: host_result.changed
+
+    - name: Revoke SSO token
+      ovirt.ovirt.ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
