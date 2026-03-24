@@ -1,0 +1,15 @@
+---
+- name: Inventory Test Playbook
+  hosts: nordics
+  gather_facts: false
+
+  tasks:
+    - name: Show host information
+      ansible.builtin.debug:
+        msg:
+          - "Hostname: {{ inventory_hostname }}"
+          - "Role: {{ role }}"
+          - "Environment Type: {{ env_type }}"
+          - "Datacenter: {{ datacenter }}"
+          - "Timezone: {{ timezone }}"
+          - "Region: {{ region }}"

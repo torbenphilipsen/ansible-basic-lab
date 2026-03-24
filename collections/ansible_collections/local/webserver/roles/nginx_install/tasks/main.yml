@@ -1,0 +1,59 @@
+ #SPDX-License-Identifier: MIT-0
+---
+ # tasks file for nginx_install
+- name: Stop Apache2 service if running
+  ansible.builtin.service:
+    name: apache2
+    state: stopped
+    enabled: false
+  become: true
+  ignore_errors: true
+
+- name: Ensure nginx user exists
+  ansible.builtin.user:
+    name: "{{ nginx_user }}"
+    system: true
+    shell: /sbin/nologin
+    state: present
+  become: true
+
+- name: Install Nginx package
+  ansible.builtin.package:
+    name: "{{ nginx_package }}"
+    state: present
+  become: true
+
+- name: Ensure Nginx is started and enabled
+  ansible.builtin.service:
+    name: "{{ nginx_service }}"
+    state: started
+    enabled: true
+  become: true
+
+- name: Deploy custom nginx.conf
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Reload Nginx
+
+- name: Create default index.html
+  ansible.builtin.copy:
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head><title>Ansible Managed</title></head>
+      <body>
+        <h1>This server is managed by Ansible</h1>
+        <p>Hostname: {{ ansible_hostname }}</p>
+        <p>Nginx Version: {{ nginx_package }}</p>
+      </body>
+      </html>
+    dest: /usr/share/nginx/html/index.html
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: '0644'
+  become: true

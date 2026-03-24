@@ -1,0 +1,21 @@
+---
+- name: Register Playbook
+  hosts: copenhagen
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Create dev group
+      register: output
+      ansible.builtin.group:
+        name: dev
+        state: present
+    - name: Show output
+      ansible.builtin.debug:
+        var: output['name']
+    - name: Add the user
+      ansible.builtin.user:
+        name: bart
+        shell: /bin/bash
+        groups: "{{ output['name'] }}"
+        append: true

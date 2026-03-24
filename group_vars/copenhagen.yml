@@ -1,0 +1,5 @@
+---
+datacenter: denmark
+timezone: Europe/Copenhagen
+ntp_server: ntp.dk.pool.ntp.org
+backup_schedule: "0 2 * * *"

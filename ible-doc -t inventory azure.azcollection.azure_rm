@@ -1,0 +1,57 @@
+amazon.aws.aws_ec2                                    EC2 inventory source                                         
+amazon.aws.aws_rds                                    RDS instance inventory source                                
+ansible.builtin.advanced_host_list                    Parses a 'host list' with ranges                             
+ansible.builtin.auto                                  Loads and executes an inventory plugin specified in a YAML co...
+ansible.builtin.constructed                           Uses Jinja2 to construct vars and groups based on existing in...
+ansible.builtin.generator                             Uses Jinja2 to construct hosts and groups from patterns      
+ansible.builtin.host_list                             Parses a 'host list' string                                  
+ansible.builtin.ini                                   Uses an Ansible INI file as inventory source                 
+ansible.builtin.script                                Executes an inventory script that returns JSON               
+ansible.builtin.toml                                  Uses a specific TOML file as an inventory source             
+ansible.builtin.yaml                                  Uses a specific YAML file as an inventory source             
+awx.awx.controller                                    Ansible dynamic inventory plugin for the Automation Platform ...
+azure.azcollection.azure_kql                          Azure Resource Manager inventory plugin using Graph QL       
+azure.azcollection.azure_rm                           Azure Resource Manager inventory plugin                      
+cisco.aci.aci_inventory_system                        Cisco ACI inventory plugin                                   
+cisco.meraki.meraki                                   Ansible dynamic inventory plugin for Cisco Meraki devices    
+cloudscale_ch.cloud.inventory                         cloudscale.ch inventory source                               
+community.aws.aws_mq                                  MQ broker inventory source                                   
+community.digitalocean.digitalocean                   DigitalOcean Inventory Plugin                                
+community.dns.hetzner_dns_records                     Create inventory from Hetzner DNS records                    
+community.dns.hosttech_dns_records                    Create inventory from Hosttech DNS records                   
+community.docker.docker_containers                    Ansible dynamic inventory plugin for Docker containers       
+community.docker.docker_machine                       Docker Machine inventory source                              
+community.docker.docker_swarm                         Ansible dynamic inventory plugin for Docker swarm nodes      
+community.general.cobbler                             Cobbler inventory source                                     
+community.general.gitlab_runners                      Ansible dynamic inventory plugin for GitLab runners          
+community.general.icinga2                             Icinga2 inventory source                                     
+community.general.iocage                              [1;30m`iocage'[0m inventory source                         
+community.general.linode                              Ansible dynamic inventory plugin for Linode                  
+community.general.lxd                                 Returns Ansible inventory from lxd host                      
+community.general.nmap                                Uses nmap to find hosts to target                            
+community.general.online                              Scaleway (previously Online SAS or Online.net) inventory sour...
+community.general.opennebula                          OpenNebula inventory source                                  
+community.general.scaleway                            Scaleway inventory source                                    
+community.general.virtualbox                          Virtualbox inventory source                                  
+community.general.xen_orchestra                       Xen Orchestra inventory source                               
+community.hrobot.robot                                Hetzner Robot inventory source                               
+community.libvirt.libvirt                             Libvirt inventory source                                     
+community.proxmox.proxmox                             Proxmox inventory source                                     
+community.vmware.vmware_host_inventory                VMware ESXi hostsystem inventory source                      
+community.vmware.vmware_vm_inventory                  VMware Guest inventory source                                
+community.zabbix.zabbix_inventory                     Zabbix Inventory Plugin                                      
+dellemc.openmanage.ome_inventory                      Group inventory plugin on OpenManage Enterprise              
+google.cloud.gcp_compute                              Google Cloud Compute Engine inventory source                 
+hetzner.hcloud.hcloud                                 Ansible dynamic inventory plugin for the Hetzner Cloud       
+infoblox.nios_modules.nios_inventory                  Infoblox inventory plugin                                    
+kubevirt.core.kubevirt                                Inventory source for KubeVirt VirtualMachines and VirtualMach...
+microsoft.ad.ldap                                     Inventory plugin for Active Directory                        
+netbox.netbox.nb_inventory                            NetBox inventory source                                      
+ngine_io.cloudstack.instance                          Apache CloudStack instance inventory source                  
+openstack.cloud.openstack                             OpenStack inventory source                                   
+ovirt.ovirt.ovirt                                     oVirt inventory source                                       
+telekom_mms.icinga_director.icinga_director_inventory Returns Ansible inventory from Icinga                        
+theforeman.foreman.foreman                            Foreman inventory source                                     
+vmware.vmware.esxi_hosts                              Create an inventory containing VMware ESXi hosts             
+vmware.vmware.vms                                     Create an inventory containing VMware VMs                    
+vultr.cloud.vultr                                     Retrieves list of instances via Vultr v2 API                 

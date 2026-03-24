@@ -1,0 +1,32 @@
+---
+- name: Async Loop Playbook - Download
+  hosts: copenhagen
+  gather_facts: true
+
+  tasks:
+    - name: Ensure download directory exists
+      ansible.builtin.file:
+        path: /tmp/downloads
+        state: directory
+        mode: '0755'
+
+    - name: Download multiple files in parallel
+      ansible.builtin.get_url:
+        url: "{{ item.url }}"
+        dest: "/tmp/downloads/{{ item.name }}"
+        mode: '0644'
+      loop:
+        - { name: 'Python-3.13.9.tgz', url: 'https://www.python.org/ftp/python/3.13.9/Python-3.13.9.tgz' }
+        - { name: 'Rancher.Desktop.Setup.1.20.0.msi', url: 'https://github.com/rancher-sandbox/rancher-desktop/releases/download/v1.20.0/Rancher.Desktop.Setup.1.20.0.msi' }
+      async: 300
+      poll: 0
+      register: download_jobs
+
+    - name: Wait for all downloads to complete
+      ansible.builtin.async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: download_results
+      until: download_results.finished
+      retries: 120
+      delay: 2
+      loop: "{{ download_jobs.results }}"

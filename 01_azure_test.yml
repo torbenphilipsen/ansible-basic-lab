@@ -1,0 +1,20 @@
+---
+- name: Test Azure Connection
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: List all resource groups in subscription
+      azure.azcollection.azure_rm_resourcegroup_info:
+      register: rg_info
+
+    - name: Display resource group count
+      ansible.builtin.debug:
+        msg: "Found {{ rg_info.resourcegroups | length }} resource groups in your Azure subscription"
+
+    - name: Display resource group names
+      ansible.builtin.debug:
+        msg: "Resource Group: {{ item.name }} - Location: {{ item.location }}"
+      loop: "{{ rg_info.resourcegroups }}"
+      loop_control:
+        label: "{{ item.name }}"

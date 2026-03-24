@@ -1,0 +1,10 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for nginx_install
+nginx_package: nginx
+nginx_service: nginx
+nginx_port: 80
+nginx_user: nginx
+nginx_worker_processes: auto
+nginx_error_log: /var/log/nginx/error.log
+nginx_access_log: /var/log/nginx/access.log

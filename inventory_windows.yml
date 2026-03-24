@@ -1,0 +1,13 @@
+---
+all:
+  children:
+    windows:
+      hosts:
+        server5:
+      vars:
+        ansible_connection: psrp
+        ansible_psrp_protocol: http
+        ansible_port: 5985
+        ansible_user: work11
+        ansible_password: HJKLasdf!ery@2T
+        ansible_psrp_auth: negotiate

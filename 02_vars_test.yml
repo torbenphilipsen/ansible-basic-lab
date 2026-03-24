@@ -1,0 +1,20 @@
+---
+- name: Test Group and Host Variables
+  hosts: nordics
+  gather_facts: false
+
+  tasks:
+    - name: Show all variables
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ inventory_hostname }}"
+          - "Company: {{ company | default('not set') }}"
+          - "Managed by: {{ managed_by | default('not set') }}"
+          - "Role: {{ role | default('not set') }}"
+          - "Environment Type: {{ env_type | default('not set') }}"
+          - "Datacenter: {{ datacenter }}"
+          - "Timezone: {{ timezone }}"
+          - "Region: {{ region }}"
+          - "NTP Server: {{ ntp_server }}"
+          - "Backup Schedule: {{ backup_schedule }}"
+          - "App Port: {{ app_port | default('not set') }}"

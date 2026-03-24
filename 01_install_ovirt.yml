@@ -1,0 +1,188 @@
+---
+- name: Install oVirt Engine on AlmaLinux 9
+  hosts: ovirtman
+  become: true
+  gather_facts: true
+
+  vars:
+    ovirt_engine_password: "ChangeMe123!"  # Use Ansible Vault in production!
+
+  tasks:
+    - name: Verify system requirements
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution in ["AlmaLinux", "Rocky", "CentOS"]
+          - ansible_distribution_major_version == "9"
+          - ansible_memtotal_mb >= 4096
+          - ansible_processor_vcpus >= 2
+        fail_msg: "System does not meet minimum requirements for oVirt Engine"
+        success_msg: "System requirements verified"
+
+    - name: Display system information
+      ansible.builtin.debug:
+        msg:
+          - "Hostname: {{ ansible_hostname }}"
+          - "FQDN: {{ ansible_fqdn }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Memory: {{ ansible_memtotal_mb }}MB"
+          - "CPUs: {{ ansible_processor_vcpus }}"
+
+    - name: Install EPEL repository from Fedora Project
+      ansible.builtin.dnf:
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        state: present
+        disable_gpg_check: true
+
+    - name: Enable AlmaLinux extras repository
+      ansible.builtin.command:
+        cmd: dnf config-manager --set-enabled extras
+      register: extras_result
+      changed_when: false
+      failed_when: false
+
+    - name: Install CentOS release package for oVirt 4.5
+      ansible.builtin.dnf:
+        name: centos-release-ovirt45
+        state: present
+      register: ovirt_repo
+
+    - name: Update package cache
+      ansible.builtin.dnf:
+        update_cache: true
+      when: ovirt_repo.changed
+
+    - name: Install oVirt Engine package
+      ansible.builtin.dnf:
+        name: ovirt-engine
+        state: present
+      register: ovirt_install
+
+    - name: Display installation status
+      ansible.builtin.debug:
+        msg: "oVirt Engine packages installed successfully"
+      when: ovirt_install.changed
+
+    - name: Install and enable firewalld
+      ansible.builtin.dnf:
+        name: firewalld
+        state: present
+
+    - name: Start and enable firewalld service
+      ansible.builtin.systemd:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Check if oVirt Engine is already configured
+      ansible.builtin.stat:
+        path: /etc/ovirt-engine/engine.conf.d/10-setup-protocols.conf
+      register: ovirt_configured
+
+    - name: Display configuration status
+      ansible.builtin.debug:
+        msg: "{{ 'oVirt Engine is already configured' if ovirt_configured.stat.exists else 'oVirt Engine requires configuration - run engine-setup manually' }}"
+
+    - name: Remove old answer file if exists
+      ansible.builtin.file:
+        path: /tmp/ovirt-engine-answers.conf
+        state: absent
+      when: not ovirt_configured.stat.exists
+
+    - name: Create engine-setup answer file
+      ansible.builtin.copy:
+        dest: /tmp/ovirt-engine-answers.conf
+        content: |
+          [environment:default]
+          OVESETUP_DIALOG/confirmSettings=bool:True
+          OVESETUP_CONFIG/applicationMode=str:both
+          OVESETUP_CONFIG/firewallManager=str:firewalld
+          OVESETUP_CONFIG/updateFirewall=bool:True
+          OVESETUP_CONFIG/websocketProxyConfig=bool:True
+          OVESETUP_CINDERLIB_INTEGRATION/enable=bool:False
+          OVESETUP_OVN/ovirtProviderOvn=bool:No
+          OVESETUP_DWH_CORE/enable=bool:Yes
+          OVESETUP_KEYCLOAK/configure=bool:Yes
+          OVESETUP_CONFIG/keycloakAdmin=str:admin@ovirt
+          OVESETUP_GRAFANA_CORE/enable=bool:Yes
+          OVESETUP_PROVISIONING/postgresProvisioningEnabled=bool:True
+          OVESETUP_DB/secured=bool:False
+          OVESETUP_DB/host=str:localhost
+          OVESETUP_DB/port=int:5432
+          OVESETUP_DB/database=str:engine
+          OVESETUP_DB/user=str:engine
+          OVESETUP_DWH_DB/secured=bool:False
+          OVESETUP_DWH_DB/host=str:localhost
+          OVESETUP_DWH_DB/port=int:5432
+          OVESETUP_DWH_DB/database=str:ovirt_engine_history
+          OVESETUP_DWH_DB/user=str:ovirt_engine_history
+          OVESETUP_ENGINE_CORE/enable=bool:True
+          OVESETUP_SYSTEM/nfsConfigEnabled=bool:False
+          OVESETUP_CORE/engineStop=bool:True
+          OVESETUP_VMCONSOLE_PROXY_CONFIG/vmconsoleProxyConfig=bool:True
+          OVESETUP_CONFIG/fqdn=str:{{ ansible_fqdn }}
+          OVESETUP_CONFIG/adminPassword=str:{{ ovirt_engine_password }}
+        mode: '0600'
+      when: not ovirt_configured.stat.exists
+
+    - name: Verify answer file contents
+      ansible.builtin.command:
+        cmd: cat /tmp/ovirt-engine-answers.conf
+      register: answer_file_check
+      changed_when: false
+      when: not ovirt_configured.stat.exists
+
+    - name: Display answer file for debugging
+      ansible.builtin.debug:
+        var: answer_file_check.stdout_lines
+      when: not ovirt_configured.stat.exists
+
+    - name: Run engine-setup with answer file
+      ansible.builtin.shell:
+        cmd: |
+          export OTOPI_NONINTERACTIVE=1
+          engine-setup --accept-defaults --config-append=/tmp/ovirt-engine-answers.conf 2>&1
+        creates: /etc/ovirt-engine/engine.conf.d/10-setup-protocols.conf
+      register: engine_setup
+      async: 1800  # 30 minute timeout
+      poll: 10
+      when: not ovirt_configured.stat.exists
+
+    - name: Display setup output
+      ansible.builtin.debug:
+        var: engine_setup.stdout_lines
+      when: not ovirt_configured.stat.exists
+
+    - name: Remove answer file
+      ansible.builtin.file:
+        path: /tmp/ovirt-engine-answers.conf
+        state: absent
+      when: not ovirt_configured.stat.exists
+
+    - name: Wait for oVirt Engine service to be ready
+      ansible.builtin.wait_for:
+        host: "{{ ansible_fqdn }}"
+        port: 443
+        delay: 10
+        timeout: 300
+      when: not ovirt_configured.stat.exists
+
+    - name: Fetch oVirt CA certificate to Ansible control node
+      ansible.builtin.fetch:
+        src: /etc/pki/ovirt-engine/ca.pem
+        dest: ~/ovirt-ca.pem
+        flat: true
+
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "oVirt Engine configuration completed!"
+          - "=========================================="
+          - ""
+          - "Web UI: https://{{ ansible_fqdn }}/ovirt-engine"
+          - "Username: admin@ovirt"
+          - "Password: {{ ovirt_engine_password }}"
+          - ""
+          - "API endpoint: https://{{ ansible_fqdn }}/ovirt-engine/api"
+          - "=========================================="
+      when: not ovirt_configured.stat.exists

@@ -1,0 +1,21 @@
+---
+- name: Tag Azure VM for AWX installation
+  hosts: localhost
+  gather_facts: true
+
+  vars:
+    # Extract username from ansible_user_id (e.g., "work1" from "work1")
+    user_tag: "{{ ansible_user_id }}_awx"
+
+  tasks:
+    - name: Display the tag that will be added
+      ansible.builtin.debug:
+        msg: "Will add tag: role: {{ user_tag }}"
+
+    - name: Tag server4 with user-specific AWX tag
+      azure.azcollection.azure_rm_virtualmachine:
+        resource_group: "ansible-{{ ansible_user_id }}"
+        name: server4
+        tags:
+          role: "{{ user_tag }}"
+        append_tags: true

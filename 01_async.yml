@@ -1,0 +1,29 @@
+---
+- name: Async Loop Playbook
+  hosts: copenhagen
+  gather_facts: true
+
+  tasks:
+    - name: Start multiple long-running updates in parallel
+      ansible.builtin.command: sleep {{ item }}
+      loop:
+        - 30
+        - 45
+        - 60
+      async: 120
+      poll: 0
+      register: async_jobs
+
+    - name: Wait for all jobs to complete
+      ansible.builtin.async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: async_results
+      until: async_results.finished
+      retries: 30
+      delay: 5
+      loop: "{{ async_jobs.results }}"
+
+    - name: Show completion times
+      ansible.builtin.debug:
+        msg: "Job {{ item.item }} completed in {{ item.delta }} seconds"
+      loop: "{{ async_results.results }}"

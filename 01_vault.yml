@@ -1,0 +1,15 @@
+---
+- name: Vault Test Playbook
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - secret.yml
+
+  tasks:
+    - name: Show encrypted variables
+      ansible.builtin.debug:
+        msg:
+          - "Database Password: {{ db_password }}"
+          - "API Key: {{ api_key }}"
+          - "Admin User: {{ admin_user }}"
+          - "SMTP Password: {{ smtp_password }}"

@@ -1,0 +1,26 @@
+---
+- name: Tag Playbook
+  hosts: copenhagen
+  gather_facts: true
+
+  tasks:
+    - name: First tag
+      ansible.builtin.debug:
+        msg: "This is a task with tag yellow and color"
+      tags:
+        - yellow
+        - color
+
+    - name: Second tag
+      ansible.builtin.debug:
+        msg: "This is a task with tag apple and fruit"
+      tags: ['apple', 'fruit']
+
+    - name: Third tag
+      ansible.builtin.debug:
+        msg: "This is a task with tag yellow, color, banana and fruit"
+      tags:
+        - yellow
+        - color
+        - banana
+        - fruit

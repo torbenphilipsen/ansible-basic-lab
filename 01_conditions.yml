@@ -1,0 +1,73 @@
+---
+- name: Conditions Playbook
+  hosts: copenhagen
+  gather_facts: true
+
+  vars:
+    run_boolean1: true
+    run_boolean2: false
+    run_string: "automation"
+    run_number: 42
+
+  tasks:
+    - name: Boolean true condition
+      ansible.builtin.debug:
+        msg: "run_boolean1 was true"
+      when: run_boolean1
+
+    - name: Boolean false condition
+      ansible.builtin.debug:
+        msg: "run_boolean2 was true"
+      when: run_boolean2
+
+    - name: Boolean not true condition
+      ansible.builtin.debug:
+        msg: "run_boolean2 was false"
+      when: not run_boolean2
+
+    - name: String condition
+      ansible.builtin.debug:
+        msg: "run_string was automation"
+      when: run_string == "automation"
+
+    - name: Number condition
+      ansible.builtin.debug:
+        msg: "run_number was 42"
+      when: run_number == 42
+
+    - name: Number condition greater
+      ansible.builtin.debug:
+        msg: "run_number was greater than 12"
+      when: run_number > 12
+
+    - name: Number condition less
+      ansible.builtin.debug:
+        msg: "run_number was less than 100"
+      when: run_number < 100
+
+    - name: AND operator
+      ansible.builtin.debug:
+        msg: "Using AND operator"
+      when: run_number == 42 and run_string == "automation"
+
+    - name: AND operator list
+      ansible.builtin.debug:
+        msg: "Using AND operator"
+      when:
+        - run_number == 42
+        - run_string == "automation"
+
+    - name: OR operator
+      ansible.builtin.debug:
+        msg: "Using OR operator"
+      when: run_number == 12345 or run_string == "automation"
+
+    - name: NOT operator
+      ansible.builtin.debug:
+        msg: "Using NOT operator"
+      when: not run_number == 12345
+
+    - name: AND OR NOT operator
+      ansible.builtin.debug:
+        msg: "Using AND OR NOT operator"
+      when: (run_number == 41 and run_string == "automation") or (not run_boolean1)

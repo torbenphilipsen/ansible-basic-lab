@@ -1,0 +1,14 @@
+---
+- name: Template Playbook
+  hosts: copenhagen
+  gather_facts: true
+
+  vars:
+    color: green
+
+  tasks:
+    - name: Template 1
+      ansible.builtin.template:
+        src: templates/template1.cfg.j2
+        dest: /tmp/ansible_template
+        mode: "0755"

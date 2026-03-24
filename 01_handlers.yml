@@ -1,0 +1,32 @@
+---
+- name: Handlers Playbook
+  hosts: copenhagen
+  gather_facts: true
+
+  tasks:
+    - name: Add line in file
+      ansible.builtin.lineinfile:
+        path: testfile.txt
+        line: Hello automation world!
+        create: true
+        mode: '0755'
+      notify: Hello World
+
+    - name: Add a new line in file
+      ansible.builtin.lineinfile:
+        path: testfile.txt
+        line: "{{ ansible_facts['date_time']['date'] }} - {{ ansible_facts['date_time']['time'] }}"
+        create: true
+        mode: '0755'
+      notify:
+        - Hello World
+        - New Line
+
+  handlers:
+    - name: Hello World
+      ansible.builtin.debug:
+        msg: "Hello World"
+
+    - name: New Line
+      ansible.builtin.debug:
+        msg: "Added a new line"

@@ -1,0 +1,20 @@
+---
+- name: Install Apache Exercise
+  hosts: servers
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Show Distribution
+      ansible.builtin.debug:
+        var: ansible_facts['distribution']
+    - name: Install Apache RedHat
+      ansible.builtin.package:
+        name: httpd
+        state: present
+      when: ansible_facts['distribution'] == "RedHat"
+    - name: Install Apache Ubuntu
+      ansible.builtin.package:
+        name: apache2
+        state: present
+      when: ansible_facts['distribution'] == "Ubuntu"

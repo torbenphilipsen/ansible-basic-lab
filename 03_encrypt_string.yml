@@ -1,0 +1,20 @@
+---
+- name: Encrypted Variables Playbook
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - app_config.yml
+
+  tasks:
+    - name: Show application configuration
+      ansible.builtin.debug:
+        msg:
+          - "App: {{ app_name }} running on port {{ app_port }}"
+          - "Database: {{ database_user }}@{{ database_host }}:{{ database_port }}/{{ database_name }}"
+          - "API Endpoint: {{ api_endpoint }}"
+
+    - name: Show encrypted values (for demo only!)
+      ansible.builtin.debug:
+        msg:
+          - "Database Password: {{ database_password }}"
+          - "API Key: {{ api_key }}"

@@ -1,0 +1,63 @@
+---
+- name: Loop Playbook
+  hosts: copenhagen
+  gather_facts: true
+
+  vars:
+    users:
+      - alice
+      - bob
+      - charlie
+
+  tasks:
+    - name: Create multiple files
+      ansible.builtin.file:
+        path: "/tmp/{{ item }}"
+        state: touch
+        mode: '0644'
+      loop:
+        - file1.txt
+        - file2.txt
+        - file3.txt
+
+    - name: Print usernames
+      ansible.builtin.debug:
+        msg: "User: {{ item }}"
+      loop: "{{ users }}"
+
+    - name: Loop over dictionary
+      ansible.builtin.debug:
+        msg: "Package {{ item.key }} should be {{ item.value }}"
+      loop:
+        - { key: 'httpd', value: 'present' }
+        - { key: 'vim', value: 'present' }
+        - { key: 'telnet', value: 'absent' }
+
+    - name: Loop with index
+      ansible.builtin.debug:
+        msg: "Item {{ idx }}: {{ item }}"
+      loop:
+        - red
+        - green
+        - blue
+      loop_control:
+        index_var: idx
+
+    - name: Create numbered files
+      ansible.builtin.file:
+        path: "/tmp/logfile{{ item }}.log"
+        state: touch
+        mode: '0644'
+      loop: "{{ range(1, 6) | list }}"
+
+    - name: Wait until current second is past 45
+      ansible.builtin.command: date +%S
+      register: current_seconds
+      until: current_seconds.stdout | int > 45
+      retries: 20
+      delay: 3
+      changed_when: false
+
+    - name: Show result
+      ansible.builtin.debug:
+        msg: "Succeeded after {{ current_seconds.attempts }} attempts - current second is {{ current_seconds.stdout }}"

@@ -1,0 +1,30 @@
+---
+plugin: azure.azcollection.azure_rm
+
+# Authentication - reads from ~/.azure/credentials by default
+auth_source: auto
+
+hostvar_expressions:
+  # Use the VM's name instead of public IP
+  ansible_host: name
+
+# Filter by resource group (optional)
+include_vm_resource_groups:
+  - '*'
+
+# Use simple hostnames instead of FQDN
+plain_host_names: true
+
+# Create groups based on tags
+keyed_groups:
+  - prefix: tag
+    key: tags
+  - prefix: location
+    key: location
+  - prefix: os
+    key: os_profile.system
+
+# Create conditional groups based on OS
+conditional_groups:
+  windows: os_profile.system == "Windows"
+  linux: os_profile.system == "Linux"

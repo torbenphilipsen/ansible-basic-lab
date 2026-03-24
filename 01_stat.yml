@@ -1,0 +1,19 @@
+---
+- name: Stat Playbook
+  hosts: copenhagen
+  become: true
+
+  tasks:
+    - name: Get Stat for
+      ansible.builtin.stat:
+        path: /etc/hosts
+      register: filestat
+
+    - name: Debug filestat
+      ansible.builtin.debug:
+        var: filestat
+
+    - name: Test filestat
+      ansible.builtin.debug:
+        msg: "File: /etc/hosts exists"
+      when: filestat['stat']['exists']

@@ -1,0 +1,53 @@
+---
+- name: Query SQL Server Database
+  hosts: windows
+  gather_facts: true
+
+  vars:
+    sql_admin_user: server5\work11
+    sql_admin_password: HJKLasdf!ery@2T
+    database_name: TestDB
+
+  tasks:
+    - name: Get Windows host IP address
+      ansible.builtin.set_fact:
+        sql_host: "{{ hostvars[inventory_hostname]['ansible_host'] | default(inventory_hostname) }}"
+
+    - name: Create table Items
+      community.general.mssql_script:
+        login_host: "{{ sql_host }}"
+        login_user: "{{ sql_admin_user }}"
+        login_password: "{{ sql_admin_password }}"
+        login_port: 1433
+        script: |
+          USE [{{ database_name }}];
+
+          -- Create the table if it doesn't exist
+          IF OBJECT_ID('Items', 'U') IS NULL
+          BEGIN
+              CREATE TABLE Items (
+                  ItemID INT PRIMARY KEY IDENTITY(1,1),
+                  ItemName NVARCHAR(50),
+                  Category NVARCHAR(50),
+                  Price DECIMAL(10, 2),
+                  CreatedAt DATETIME DEFAULT GETDATE()
+              );
+          END
+
+          -- Add 10 rows only if the table is currently empty
+          IF (SELECT COUNT(*) FROM Items) = 0
+          BEGIN
+              INSERT INTO Items (ItemName, Category, Price) VALUES
+              ('Thermal Paste', 'Cooling', 9.99),
+              ('Mechanical Keyboard', 'Peripherals', 89.50),
+              ('Gaming Mouse', 'Peripherals', 45.00),
+              ('27-inch Monitor', 'Displays', 220.00),
+              ('HDMI Cable 2m', 'Cables', 12.99),
+              ('USB-C Hub', 'Accessories', 35.00),
+              ('Webcam 1080p', 'Peripherals', 55.00),
+              ('External SSD 1TB', 'Storage', 110.00),
+              ('Desk Mat', 'Accessories', 15.00),
+              ('LED Strip', 'Lighting', 20.00);
+          END
+      register: query_result
+      delegate_to: localhost

@@ -1,0 +1,5 @@
+---
+datacenter: sweden
+timezone: Europe/Stockholm
+ntp_server: ntp.se.pool.ntp.org
+backup_schedule: "0 3 * * *"

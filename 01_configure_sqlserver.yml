@@ -1,0 +1,37 @@
+---
+- name: Configure SQL Server
+  hosts: windows
+  gather_facts: true
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+
+  vars:
+    sql_instance_name: MSSQLSERVER
+
+  tasks:
+    - name: Enable SQL Server Browser service
+      ansible.windows.win_service:
+        name: SQLBrowser
+        start_mode: auto
+        state: started
+
+    - name: Configure firewall for SQL Server
+      community.windows.win_firewall_rule:
+        name: SQL Server
+        localport: 1433
+        action: allow
+        direction: in
+        protocol: tcp
+        state: present
+        enabled: true
+
+    - name: Configure firewall for SQL Browser
+      community.windows.win_firewall_rule:
+        name: SQL Browser
+        localport: 1434
+        action: allow
+        direction: in
+        protocol: tcp
+        state: present
+        enabled: true

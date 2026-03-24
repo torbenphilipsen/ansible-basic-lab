@@ -1,0 +1,61 @@
+---
+- name: Manage SQL Server Databases
+  hosts: windows
+  gather_facts: true
+
+  vars:
+    sql_admin_user: server5\work11
+    sql_admin_password: HJKLasdf!ery@2T
+    database_name: TestDB
+    app_user: appuser
+    app_password: "AppP@ss123!"
+
+  tasks:
+    - name: Get Windows host IP address
+      ansible.builtin.set_fact:
+        sql_host: "{{ hostvars[inventory_hostname]['ansible_host'] | default(inventory_hostname) }}"
+
+    - name: Test SQL Server TCP connectivity
+      ansible.builtin.wait_for:
+        host: "{{ sql_host }}"
+        port: 1433
+        timeout: 10
+      delegate_to: localhost
+
+    - name: Create database
+      community.general.mssql_db:
+        name: "{{ database_name }}"
+        state: present
+        login_host: "{{ sql_host }}"
+        login_user: "{{ sql_admin_user }}"
+        login_password: "{{ sql_admin_password }}"
+        login_port: 1433
+      delegate_to: localhost
+
+    - name: Create SQL login
+      community.general.mssql_script:
+        login_host: "{{ sql_host }}"
+        login_user: "{{ sql_admin_user }}"
+        login_password: "{{ sql_admin_password }}"
+        login_port: 1433
+        script: |
+          IF NOT EXISTS (SELECT * FROM sys.sql_logins WHERE name = '{{ app_user }}')
+          BEGIN
+            CREATE LOGIN [{{ app_user }}] WITH PASSWORD = '{{ app_password }}'
+          END
+      delegate_to: localhost
+
+    - name: Create database user and grant permissions
+      community.general.mssql_script:
+        login_host: "{{ sql_host }}"
+        login_user: "{{ sql_admin_user }}"
+        login_password: "{{ sql_admin_password }}"
+        login_port: 1433
+        db: "{{ database_name }}"
+        script: |
+          IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = '{{ app_user }}')
+          BEGIN
+            CREATE USER [{{ app_user }}] FOR LOGIN [{{ app_user }}]
+            ALTER ROLE db_owner ADD MEMBER [{{ app_user }}]
+          END
+      delegate_to: localhost

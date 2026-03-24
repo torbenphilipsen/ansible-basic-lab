@@ -1,0 +1,5 @@
+---
+role: web
+env_type: production
+app_port: 8080
+max_connections: 1000

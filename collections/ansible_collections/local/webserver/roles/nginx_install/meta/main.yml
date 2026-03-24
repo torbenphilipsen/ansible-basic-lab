@@ -1,0 +1,26 @@
+ #SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: TP
+  description: your role description
+  company: RegionH
+
+  license: GPL-3.0-or-later
+
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+
+  galaxy_tags:
+    - nginx
+    - web
+    - webserver
+
+dependencies: []
